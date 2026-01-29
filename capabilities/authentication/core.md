@@ -6,4 +6,5 @@
 > **Status: COMPLETED**
 [x] Given a user with email and password, when user tries login for more than 3 times, then return authentication error every time and block the user
 > **Status: COMPLETED**
-[ ] Given a user with email and password, when user tries to login after being blocked, then validate that the login is attempted with a one-time-pin #ambiguous how will the user get it? During forgot password? #integration [forgot-password](../forgot-password/core.md)
+[x] Given a user with email and password, when user tries to login after being blocked, then validate that the login is attempted with a one-time-pin #ambiguous how will the user get it? During forgot password? #integration [forgot-password](../forgot-password/core.md)
+> **Status: COMPLETED**

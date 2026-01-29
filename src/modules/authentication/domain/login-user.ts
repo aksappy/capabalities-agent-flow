@@ -2,6 +2,7 @@ import type {
   GetUserByEmail,
   IssueToken,
   LoginAttemptTracker,
+  ValidateOneTimePin,
   VerifyPassword,
 } from './ports.js';
 import type { LoginResult } from './login-result.js';
@@ -11,8 +12,11 @@ export const loginUser = async (
   verifyPassword: VerifyPassword,
   issueToken: IssueToken,
   attemptTracker: LoginAttemptTracker,
+  validateOtp: ValidateOneTimePin,
   email: string,
-  password: string
+  password: string,
+  oneTimePin?: string,
+  allowBlockedLoginWithOtp: boolean = false
 ): Promise<LoginResult> => {
   const user = await getUser.findByEmail(email);
   if (user === null) {
@@ -20,7 +24,21 @@ export const loginUser = async (
   }
   const blocked = await attemptTracker.isBlocked(email);
   if (blocked) {
-    return { kind: 'failure', reason: 'user_blocked' };
+    // #ambiguous – gated by feature flag; strategy (ValidateOneTimePin) provides OTP source when enabled.
+    if (!allowBlockedLoginWithOtp) {
+      return { kind: 'failure', reason: 'user_blocked' };
+    }
+    if (oneTimePin !== undefined) {
+      const otpValid = await validateOtp.validate(email, oneTimePin);
+      if (otpValid) {
+        await attemptTracker.unblock(email);
+        // Fall through to password verification below
+      } else {
+        return { kind: 'failure', reason: 'user_blocked' };
+      }
+    } else {
+      return { kind: 'failure', reason: 'user_blocked' };
+    }
   }
   const valid = await verifyPassword.verify(password, user.passwordHash);
   if (!valid) {

@@ -4,6 +4,7 @@ import { createRegistrationRouter } from './modules/registration/infra/registrat
 import { createBcryptHasher } from './modules/registration/infra/bcrypt-hasher.js';
 import { createLoginRouter } from './modules/authentication/infra/login-router.js';
 import { createInMemoryLoginAttemptTracker } from './modules/authentication/infra/in-memory-login-attempt-tracker.js';
+import { createNoOpOtpValidator } from './modules/authentication/infra/no-op-otp-validator.js';
 import { createBcryptVerifier } from './modules/authentication/infra/bcrypt-verifier.js';
 import { createJwtIssuer } from './modules/authentication/infra/jwt-issuer.js';
 
@@ -21,7 +22,9 @@ export const createApp = (repo: UserRepository, jwtSecret: string): ReturnType<t
   const verifyPassword = createBcryptVerifier();
   const issueToken = createJwtIssuer(jwtSecret);
   const loginAttemptTracker = createInMemoryLoginAttemptTracker();
-  app.use('/login', createLoginRouter(repo, verifyPassword, issueToken, loginAttemptTracker));
+  const validateOtp = createNoOpOtpValidator();
+  const allowBlockedLoginWithOtp = true; // #ambiguous – can be driven by config/feature flag later
+  app.use('/login', createLoginRouter(repo, verifyPassword, issueToken, loginAttemptTracker, validateOtp, allowBlockedLoginWithOtp));
 
   return app;
 };

@@ -5,6 +5,7 @@ import type {
   GetUserByEmail,
   IssueToken,
   LoginAttemptTracker,
+  ValidateOneTimePin,
   VerifyPassword,
 } from '../domain/ports.js';
 import type { User } from '../../registration/domain/user.js';
@@ -13,6 +14,11 @@ import { createLoginRouter } from '../infra/login-router.js';
 const noBlockTracker: LoginAttemptTracker = {
   isBlocked: vi.fn().mockResolvedValue(false),
   recordFailedAttempt: vi.fn().mockResolvedValue(undefined),
+  unblock: vi.fn().mockResolvedValue(undefined),
+};
+
+const noOpValidateOtp: ValidateOneTimePin = {
+  validate: vi.fn().mockResolvedValue(false),
 };
 
 describe('Authentication HTTP - invoke the authentication module', () => {
@@ -28,7 +34,7 @@ describe('Authentication HTTP - invoke the authentication module', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker));
+    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker, noOpValidateOtp));
 
     await request(app)
       .post('/login')
@@ -52,7 +58,7 @@ describe('Authentication HTTP - invalid credentials return 401', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker));
+    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker, noOpValidateOtp));
 
     const response = await request(app)
       .post('/login')
@@ -81,7 +87,7 @@ describe('Authentication HTTP - valid credentials return 200 with JWT', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker));
+    app.use('/login', createLoginRouter(getUser, verifyPassword, issueToken, noBlockTracker, noOpValidateOtp));
 
     const response = await request(app)
       .post('/login')

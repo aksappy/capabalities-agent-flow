@@ -4,6 +4,7 @@ import type {
   GetUserByEmail,
   IssueToken,
   LoginAttemptTracker,
+  ValidateOneTimePin,
   VerifyPassword,
 } from '../domain/ports.js';
 import type { User } from '../../registration/domain/user.js';
@@ -11,6 +12,7 @@ import type { User } from '../../registration/domain/user.js';
 const noBlockTracker: LoginAttemptTracker = {
   isBlocked: vi.fn().mockResolvedValue(false),
   recordFailedAttempt: vi.fn().mockResolvedValue(undefined),
+  unblock: vi.fn().mockResolvedValue(undefined),
 };
 
 describe('Authentication - return JWT when user exists and password is correct', () => {
@@ -30,11 +32,15 @@ describe('Authentication - return JWT when user exists and password is correct',
       issue: vi.fn().mockResolvedValue('a-jwt-token'),
     };
 
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(false),
+    };
     const result = await loginUser(
       getUser,
       verifyPassword,
       issueToken,
       noBlockTracker,
+      validateOtp,
       'user@example.com',
       'correctpassword'
     );
@@ -56,11 +62,15 @@ describe('Authentication - user does not exist returns authentication error', ()
       issue: vi.fn().mockResolvedValue('token'),
     };
 
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(false),
+    };
     const result = await loginUser(
       getUser,
       verifyPassword,
       issueToken,
       noBlockTracker,
+      validateOtp,
       'unknown@example.com',
       'anypassword'
     );
@@ -88,11 +98,15 @@ describe('Authentication - incorrect password returns authentication error', () 
       issue: vi.fn().mockResolvedValue('token'),
     };
 
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(false),
+    };
     const result = await loginUser(
       getUser,
       verifyPassword,
       issueToken,
       noBlockTracker,
+      validateOtp,
       'user@example.com',
       'wrongpassword'
     );
@@ -126,6 +140,10 @@ describe('Authentication - block user after 3 failed logins', () => {
         failedCount += 1;
         return Promise.resolve();
       }),
+      unblock: vi.fn().mockResolvedValue(undefined),
+    };
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(false),
     };
 
     const result1 = await loginUser(
@@ -133,6 +151,7 @@ describe('Authentication - block user after 3 failed logins', () => {
       verifyPassword,
       issueToken,
       attemptTracker,
+      validateOtp,
       'user@example.com',
       'wrong1'
     );
@@ -141,6 +160,7 @@ describe('Authentication - block user after 3 failed logins', () => {
       verifyPassword,
       issueToken,
       attemptTracker,
+      validateOtp,
       'user@example.com',
       'wrong2'
     );
@@ -149,6 +169,7 @@ describe('Authentication - block user after 3 failed logins', () => {
       verifyPassword,
       issueToken,
       attemptTracker,
+      validateOtp,
       'user@example.com',
       'wrong3'
     );
@@ -158,6 +179,7 @@ describe('Authentication - block user after 3 failed logins', () => {
       verifyPassword,
       issueToken,
       attemptTracker,
+      validateOtp,
       'user@example.com',
       'wrong4'
     );
@@ -172,5 +194,91 @@ describe('Authentication - block user after 3 failed logins', () => {
     expect(result4.kind).toBe('failure');
     expect(result4.reason).toBe('user_blocked');
     expect(verifyCallCountAfterFour).toBe(verifyCallCountAfterThree);
+  });
+});
+
+describe('Authentication - blocked user can login with one-time-pin', () => {
+  it('when user is blocked and provides valid OTP and correct password, then return JWT and allow login', async () => {
+    const user: User = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      email: 'user@example.com',
+      passwordHash: 'storedhash',
+    };
+    const getUser: GetUserByEmail = {
+      findByEmail: vi.fn().mockResolvedValue(user),
+    };
+    const verifyPassword: VerifyPassword = {
+      verify: vi.fn().mockResolvedValue(true),
+    };
+    const issueToken: IssueToken = {
+      issue: vi.fn().mockResolvedValue('a-jwt-token'),
+    };
+    const attemptTracker: LoginAttemptTracker = {
+      isBlocked: vi.fn().mockResolvedValue(true),
+      recordFailedAttempt: vi.fn().mockResolvedValue(undefined),
+      unblock: vi.fn().mockResolvedValue(undefined),
+    };
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(true),
+    };
+
+    const result = await loginUser(
+      getUser,
+      verifyPassword,
+      issueToken,
+      attemptTracker,
+      validateOtp,
+      'user@example.com',
+      'correctpassword',
+      '123456',
+      true // allowBlockedLoginWithOtp – feature flag on
+    );
+
+    expect(result.kind).toBe('success');
+    expect(result.token).toBe('a-jwt-token');
+    expect(validateOtp.validate).toHaveBeenCalledWith('user@example.com', '123456');
+    expect(attemptTracker.unblock).toHaveBeenCalledWith('user@example.com');
+  });
+
+  it('when user is blocked and feature flag is off, then return user_blocked and do not use OTP strategy', async () => {
+    const user: User = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      email: 'user@example.com',
+      passwordHash: 'storedhash',
+    };
+    const getUser: GetUserByEmail = {
+      findByEmail: vi.fn().mockResolvedValue(user),
+    };
+    const verifyPassword: VerifyPassword = {
+      verify: vi.fn().mockResolvedValue(true),
+    };
+    const issueToken: IssueToken = {
+      issue: vi.fn().mockResolvedValue('token'),
+    };
+    const attemptTracker: LoginAttemptTracker = {
+      isBlocked: vi.fn().mockResolvedValue(true),
+      recordFailedAttempt: vi.fn().mockResolvedValue(undefined),
+      unblock: vi.fn().mockResolvedValue(undefined),
+    };
+    const validateOtp: ValidateOneTimePin = {
+      validate: vi.fn().mockResolvedValue(true),
+    };
+
+    const result = await loginUser(
+      getUser,
+      verifyPassword,
+      issueToken,
+      attemptTracker,
+      validateOtp,
+      'user@example.com',
+      'correctpassword',
+      '123456',
+      false // allowBlockedLoginWithOtp – feature flag off
+    );
+
+    expect(result.kind).toBe('failure');
+    expect(result.reason).toBe('user_blocked');
+    expect(validateOtp.validate).not.toHaveBeenCalled();
+    expect(attemptTracker.unblock).not.toHaveBeenCalled();
   });
 });

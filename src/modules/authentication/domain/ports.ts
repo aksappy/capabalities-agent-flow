@@ -15,4 +15,10 @@ export interface IssueToken {
 export interface LoginAttemptTracker {
   isBlocked(email: string): Promise<boolean>;
   recordFailedAttempt(email: string): Promise<void>;
+  unblock(email: string): Promise<void>;
+}
+
+/** #integration [forgot-password] – OTP source is #ambiguous (e.g. forgot password). */
+export interface ValidateOneTimePin {
+  validate(email: string, pin: string): Promise<boolean>;
 }

@@ -14,5 +14,8 @@ export const createInMemoryLoginAttemptTracker = (): LoginAttemptTracker => {
       const count = failedCountByEmail.get(email) ?? 0;
       failedCountByEmail.set(email, count + 1);
     },
+    unblock: async (email: string): Promise<void> => {
+      failedCountByEmail.delete(email);
+    },
   };
 };
