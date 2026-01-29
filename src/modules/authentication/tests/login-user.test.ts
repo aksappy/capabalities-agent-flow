@@ -58,3 +58,34 @@ describe('Authentication - user does not exist returns authentication error', ()
     expect(issueToken.issue).not.toHaveBeenCalled();
   });
 });
+
+describe('Authentication - incorrect password returns authentication error', () => {
+  it('when password is incorrect, then return authentication error', async () => {
+    const user: User = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      email: 'user@example.com',
+      passwordHash: 'storedhash',
+    };
+    const getUser: GetUserByEmail = {
+      findByEmail: vi.fn().mockResolvedValue(user),
+    };
+    const verifyPassword: VerifyPassword = {
+      verify: vi.fn().mockResolvedValue(false),
+    };
+    const issueToken: IssueToken = {
+      issue: vi.fn().mockResolvedValue('token'),
+    };
+
+    const result = await loginUser(
+      getUser,
+      verifyPassword,
+      issueToken,
+      'user@example.com',
+      'wrongpassword'
+    );
+
+    expect(result.kind).toBe('failure');
+    expect(result.reason).toBe('invalid_password');
+    expect(issueToken.issue).not.toHaveBeenCalled();
+  });
+});
