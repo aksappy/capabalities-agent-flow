@@ -22,7 +22,7 @@ export const createRegistrationRouter = (repo: UserRepository): Router => {
       res.status(409).end();
       return;
     }
-    res.status(200).end();
+    res.status(204).end();
   });
   return router;
 };
