@@ -45,3 +45,39 @@ describe('Registration HTTP - conflict when email is duplicate', () => {
     expect(response.status).toBe(409);
   });
 });
+
+describe('Registration HTTP - validate payload', () => {
+  it('when payload has invalid email, respond with 400', async () => {
+    const repo: UserRepository = {
+      findByEmail: vi.fn(),
+      save: vi.fn(),
+    };
+    const app = express();
+    app.use(express.json());
+    app.use('/register', createRegistrationRouter(repo));
+
+    const response = await request(app)
+      .post('/register')
+      .send({ email: 'notanemail', password: 'password123!' });
+
+    expect(response.status).toBe(400);
+    expect(repo.findByEmail).not.toHaveBeenCalled();
+  });
+
+  it('when payload has password shorter than 8 characters, respond with 400', async () => {
+    const repo: UserRepository = {
+      findByEmail: vi.fn(),
+      save: vi.fn(),
+    };
+    const app = express();
+    app.use(express.json());
+    app.use('/register', createRegistrationRouter(repo));
+
+    const response = await request(app)
+      .post('/register')
+      .send({ email: 'user@example.com', password: 'short' });
+
+    expect(response.status).toBe(400);
+    expect(repo.findByEmail).not.toHaveBeenCalled();
+  });
+});
