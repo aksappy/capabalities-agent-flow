@@ -40,3 +40,21 @@ describe('Registration - Scenario 2: Password Length Validation', () => {
     expect(result.error).toBe('Password must be at least 8 characters long');
   });
 });
+
+describe('Registration - Scenario 3: Password Special Character Validation', () => {
+  let registration: Registration;
+
+  beforeEach(() => {
+    registration = new Registration();
+  });
+
+  it('should reject registration when password does not contain a special character', async () => {
+    const email = 'test@example.com';
+    const passwordWithoutSpecial = 'ValidPass123';
+
+    const result = await registration.register(email, passwordWithoutSpecial);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Password must contain at least one special character');
+  });
+});
