@@ -14,6 +14,8 @@ export const createRegistrationRoutes = (userRepository: UserRepository): Router
 
       if (result.success) {
         return res.status(204).send();
+      } else if (result.error === 'Email already exists') {
+        return res.status(409).json({ error: result.error });
       } else {
         return res.status(400).json({ error: result.error });
       }
