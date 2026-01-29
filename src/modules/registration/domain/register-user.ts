@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { User } from './user.js';
-import type { UserRepository } from './ports.js';
+import type { HashPassword, UserRepository } from './ports.js';
 import type { RegisterResult } from './register-result.js';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -8,6 +8,7 @@ const SPECIAL_CHAR_REGEX = /[^a-zA-Z0-9]/;
 
 export const registerUser = async (
   repo: UserRepository,
+  hashPassword: HashPassword,
   email: string,
   password: string
 ): Promise<RegisterResult> => {
@@ -21,10 +22,11 @@ export const registerUser = async (
   if (existing !== null) {
     return { kind: 'failure', reason: 'email_already_taken' };
   }
+  const passwordHash = await hashPassword.hash(password);
   const user: User = {
     id: randomUUID(),
     email,
-    passwordHash: password,
+    passwordHash,
   };
   await repo.save(user);
   return { kind: 'success' };

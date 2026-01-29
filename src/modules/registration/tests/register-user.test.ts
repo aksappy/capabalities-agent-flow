@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { registerUser } from '../domain/register-user.js';
-import type { UserRepository } from '../domain/ports.js';
+import type { HashPassword, UserRepository } from '../domain/ports.js';
+
+const identityHasher: HashPassword = {
+  hash: (p) => Promise.resolve(p),
+};
 
 describe('Registration - register only when the email is unique', () => {
   it('when email is unique, registration succeeds and user is saved', async () => {
@@ -12,6 +16,7 @@ describe('Registration - register only when the email is unique', () => {
 
     const result = await registerUser(
       repo,
+      identityHasher,
       'new@example.com',
       'password123!'
     );
@@ -35,7 +40,7 @@ describe('Registration - register only when password is at least 8 characters lo
       save: vi.fn().mockResolvedValue(undefined),
     };
 
-    const result = await registerUser(repo, 'new@example.com', 'short');
+    const result = await registerUser(repo, identityHasher, 'new@example.com', 'short');
 
     expect(result.kind).toBe('failure');
     expect(result.reason).toBe('password_too_short');
@@ -49,7 +54,7 @@ describe('Registration - email unique, password 8+ chars and contains special ch
       save: vi.fn().mockResolvedValue(undefined),
     };
 
-    const result = await registerUser(repo, 'new@example.com', 'password123');
+    const result = await registerUser(repo, identityHasher, 'new@example.com', 'password123');
 
     expect(result.kind).toBe('failure');
     expect(result.reason).toBe('password_must_contain_special_character');

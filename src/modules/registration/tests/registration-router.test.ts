@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import type { UserRepository } from '../domain/ports.js';
+import type { HashPassword, UserRepository } from '../domain/ports.js';
 import { createRegistrationRouter } from '../infra/registration-router.js';
+
+const identityHasher: HashPassword = {
+  hash: (p) => Promise.resolve(p),
+};
 
 describe('Registration HTTP - invoke the registration module', () => {
   it('when HTTP request has email and password, then registration module is invoked', async () => {
@@ -12,7 +16,7 @@ describe('Registration HTTP - invoke the registration module', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/register', createRegistrationRouter(repo));
+    app.use('/register', createRegistrationRouter(repo, identityHasher));
 
     await request(app)
       .post('/register')
@@ -36,7 +40,7 @@ describe('Registration HTTP - conflict when email is duplicate', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/register', createRegistrationRouter(repo));
+    app.use('/register', createRegistrationRouter(repo, identityHasher));
 
     const response = await request(app)
       .post('/register')
@@ -54,7 +58,7 @@ describe('Registration HTTP - validate payload', () => {
     };
     const app = express();
     app.use(express.json());
-    app.use('/register', createRegistrationRouter(repo));
+    app.use('/register', createRegistrationRouter(repo, identityHasher));
 
     const response = await request(app)
       .post('/register')
@@ -71,7 +75,7 @@ describe('Registration HTTP - validate payload', () => {
     };
     const app = express();
     app.use(express.json());
-    app.use('/register', createRegistrationRouter(repo));
+    app.use('/register', createRegistrationRouter(repo, identityHasher));
 
     const response = await request(app)
       .post('/register')
@@ -90,7 +94,7 @@ describe('Registration HTTP - success response', () => {
     };
     const app = express();
     app.use(express.json());
-    app.use('/register', createRegistrationRouter(repo));
+    app.use('/register', createRegistrationRouter(repo, identityHasher));
 
     const response = await request(app)
       .post('/register')

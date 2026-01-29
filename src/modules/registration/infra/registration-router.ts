@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { UserRepository } from '../domain/ports.js';
+import type { HashPassword, UserRepository } from '../domain/ports.js';
 import { registerUser } from '../domain/register-user.js';
 
 const registerBodySchema = z.object({
@@ -8,7 +8,10 @@ const registerBodySchema = z.object({
   password: z.string().min(8),
 });
 
-export const createRegistrationRouter = (repo: UserRepository): Router => {
+export const createRegistrationRouter = (
+  repo: UserRepository,
+  hashPassword: HashPassword
+): Router => {
   const router = Router();
   router.post('/', async (req, res) => {
     const parsed = registerBodySchema.safeParse(req.body);
@@ -17,7 +20,7 @@ export const createRegistrationRouter = (repo: UserRepository): Router => {
       return;
     }
     const { email, password } = parsed.data;
-    const result = await registerUser(repo, email, password);
+    const result = await registerUser(repo, hashPassword, email, password);
     if (result.kind === 'failure' && result.reason === 'email_already_taken') {
       res.status(409).end();
       return;
