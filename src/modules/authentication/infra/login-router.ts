@@ -10,8 +10,12 @@ export const createLoginRouter = (
   const router = Router();
   router.post('/', async (req, res) => {
     const { email, password } = req.body as { email: string; password: string };
-    await loginUser(getUser, verifyPassword, issueToken, email, password);
-    res.status(200).end();
+    const result = await loginUser(getUser, verifyPassword, issueToken, email, password);
+    if (result.kind === 'failure') {
+      res.status(401).end();
+      return;
+    }
+    res.status(200).json({ token: result.token });
   });
   return router;
 };
