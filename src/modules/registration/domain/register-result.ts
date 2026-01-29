@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const registerSuccessSchema = z.object({ kind: z.literal('success') });
 export const registerFailureSchema = z.object({
   kind: z.literal('failure'),
-  reason: z.enum(['email_already_taken']),
+  reason: z.enum(['email_already_taken', 'password_too_short']),
 });
 export const registerResultSchema = z.discriminatedUnion('kind', [
   registerSuccessSchema,

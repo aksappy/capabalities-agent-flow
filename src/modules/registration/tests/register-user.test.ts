@@ -27,3 +27,17 @@ describe('Registration - register only when the email is unique', () => {
     );
   });
 });
+
+describe('Registration - register only when password is at least 8 characters long', () => {
+  it('when password is shorter than 8 characters, registration fails with password_too_short', async () => {
+    const repo: UserRepository = {
+      findByEmail: vi.fn().mockResolvedValue(null),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const result = await registerUser(repo, 'new@example.com', 'short');
+
+    expect(result.kind).toBe('failure');
+    expect(result.reason).toBe('password_too_short');
+  });
+});
