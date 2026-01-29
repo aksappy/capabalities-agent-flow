@@ -11,3 +11,7 @@ export interface IssueResetToken {
 export interface SendResetPasswordEmail {
   send(email: string, resetToken: string): Promise<void>;
 }
+
+export interface UnblockUser {
+  unblock(user: User): Promise<void>;
+}

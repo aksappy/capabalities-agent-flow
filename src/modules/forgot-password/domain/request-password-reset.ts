@@ -1,7 +1,13 @@
-import type { GetUserByEmail, IssueResetToken, SendResetPasswordEmail } from './ports.js';
+import type {
+  GetUserByEmail,
+  IssueResetToken,
+  SendResetPasswordEmail,
+  UnblockUser,
+} from './ports.js';
 
 export const requestPasswordReset = async (
   getUser: GetUserByEmail,
+  unblockUser: UnblockUser,
   issueResetToken: IssueResetToken,
   sendResetEmail: SendResetPasswordEmail,
   email: string
@@ -10,6 +16,7 @@ export const requestPasswordReset = async (
   if (user === null) {
     return;
   }
+  await unblockUser.unblock(user);
   const token = await issueResetToken.issue(user);
   await sendResetEmail.send(user.email, token);
 };
