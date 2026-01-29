@@ -56,3 +56,39 @@ describe('Registration HTTP - Scenario 2: Duplicate Email Returns 409', () => {
     expect(response.body.error).toBe('Email already exists');
   });
 });
+
+describe('Registration HTTP - Scenario 3: Validate Payload Returns 400', () => {
+  let app: express.Application;
+  let userRepository: InMemoryUserRepository;
+
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+    userRepository = new InMemoryUserRepository();
+    app.use('/api', createRegistrationRoutes(userRepository));
+  });
+
+  it('should return 400 when email is invalid', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({
+        email: 'not-an-email',
+        password: 'ValidPass123!',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('errors');
+  });
+
+  it('should return 400 when password is less than 8 characters', async () => {
+    const response = await request(app)
+      .post('/api/register')
+      .send({
+        email: 'test@example.com',
+        password: 'Short1!',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('errors');
+  });
+});
