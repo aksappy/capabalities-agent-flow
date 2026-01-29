@@ -12,6 +12,14 @@ export class Registration {
   private users: Map<string, User> = new Map();
 
   async register(email: string, password: string): Promise<RegistrationResult> {
+    // Check password length
+    if (password.length < 8) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters long',
+      };
+    }
+
     // Check if email already exists
     if (this.users.has(email)) {
       return {
