@@ -4,4 +4,4 @@
 > **Status: COMPLETED**
 [x] Given a user with email and password, when user wants to login and password is incorrect, then return authentication error
 > **Status: COMPLETED**
-
+[ ] Given a user with email and password, when user tries login for more than 3 times, then return authentication error every time and block the user
