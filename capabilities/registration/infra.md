@@ -9,5 +9,7 @@
 > **Status: COMPLETED**
 
 # Database
-[ ] Given a user wants to register, when registration module invokes the repository to save the user, then the user should be saved in the database.
-[ ] Given a user wants to register, when registration module invokes the repository to fetch the user by email, then the user should be fetched from the database.
+[x] Given a user wants to register, when registration module invokes the repository to save the user, then the user should be saved in the database.
+> **Status: COMPLETED**
+[x] Given a user wants to register, when registration module invokes the repository to fetch the user by email, then the user should be fetched from the database.
+> **Status: COMPLETED**

@@ -11,3 +11,9 @@
 - **Context:** Scenario requires password to contain a special character before saving the user.
 - **Decision:** Treat “special character” as any character that is not alphanumeric (regex `/[^a-zA-Z0-9]/`). Validation runs after length check, before email-uniqueness check.
 - **Consequences:** Simple, consistent rule; easy to test. If product later requires a specific set of symbols, this can be narrowed via a config or strategy.
+
+## 3. SQLite driver: sql.js
+
+- **Context:** Database scenarios require a SQLite repository; better-sqlite3 native bindings failed to load in the environment (node-v115).
+- **Decision:** Use sql.js (WASM, pure JS) for the SQLite implementation. Repository accepts a `SqliteDb` interface (run, exec) so the concrete driver is swappable.
+- **Consequences:** No native build step; runs everywhere. In-memory by default; for file persistence we can pass a Database created from a buffer or use export(). Slightly slower than native; acceptable for registration volume.
