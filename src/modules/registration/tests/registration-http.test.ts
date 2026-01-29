@@ -26,3 +26,33 @@ describe('Registration HTTP - Scenario 1: Invoke Registration Module', () => {
     expect(response.status).toBe(204);
   });
 });
+
+describe('Registration HTTP - Scenario 2: Duplicate Email Returns 409', () => {
+  let app: express.Application;
+  let userRepository: InMemoryUserRepository;
+
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+    userRepository = new InMemoryUserRepository();
+    app.use('/api', createRegistrationRoutes(userRepository));
+  });
+
+  it('should return 409 Conflict when email already exists', async () => {
+    const email = 'test@example.com';
+    const password = 'ValidPass123!';
+
+    // Register first user
+    await request(app)
+      .post('/api/register')
+      .send({ email, password });
+
+    // Attempt to register with same email
+    const response = await request(app)
+      .post('/api/register')
+      .send({ email, password });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toBe('Email already exists');
+  });
+});
