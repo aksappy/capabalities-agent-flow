@@ -32,3 +32,29 @@ describe('Authentication - return JWT when user exists and password is correct',
     expect(result.token).toBe('a-jwt-token');
   });
 });
+
+describe('Authentication - user does not exist returns authentication error', () => {
+  it('when user does not exist, then return authentication error', async () => {
+    const getUser: GetUserByEmail = {
+      findByEmail: vi.fn().mockResolvedValue(null),
+    };
+    const verifyPassword: VerifyPassword = {
+      verify: vi.fn().mockResolvedValue(true),
+    };
+    const issueToken: IssueToken = {
+      issue: vi.fn().mockResolvedValue('token'),
+    };
+
+    const result = await loginUser(
+      getUser,
+      verifyPassword,
+      issueToken,
+      'unknown@example.com',
+      'anypassword'
+    );
+
+    expect(result.kind).toBe('failure');
+    expect(result.reason).toBe('user_not_found');
+    expect(issueToken.issue).not.toHaveBeenCalled();
+  });
+});
