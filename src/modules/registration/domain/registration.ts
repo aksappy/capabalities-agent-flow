@@ -10,6 +10,7 @@ interface User {
 
 export class Registration {
   private users: Map<string, User> = new Map();
+  private readonly SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/;
 
   async register(email: string, password: string): Promise<RegistrationResult> {
     // Check password length
@@ -17,6 +18,14 @@ export class Registration {
       return {
         success: false,
         error: 'Password must be at least 8 characters long',
+      };
+    }
+
+    // Check for special character
+    if (!this.SPECIAL_CHAR_REGEX.test(password)) {
+      return {
+        success: false,
+        error: 'Password must contain at least one special character',
       };
     }
 
