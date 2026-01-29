@@ -11,3 +11,8 @@ export interface VerifyPassword {
 export interface IssueToken {
   issue(user: User): Promise<string>;
 }
+
+export interface LoginAttemptTracker {
+  isBlocked(email: string): Promise<boolean>;
+  recordFailedAttempt(email: string): Promise<void>;
+}

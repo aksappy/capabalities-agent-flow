@@ -1,16 +1,29 @@
 import { Router } from 'express';
 import { loginUser } from '../domain/login-user.js';
-import type { GetUserByEmail, IssueToken, VerifyPassword } from '../domain/ports.js';
+import type {
+  GetUserByEmail,
+  IssueToken,
+  LoginAttemptTracker,
+  VerifyPassword,
+} from '../domain/ports.js';
 
 export const createLoginRouter = (
   getUser: GetUserByEmail,
   verifyPassword: VerifyPassword,
-  issueToken: IssueToken
+  issueToken: IssueToken,
+  attemptTracker: LoginAttemptTracker
 ): Router => {
   const router = Router();
   router.post('/', async (req, res) => {
     const { email, password } = req.body as { email: string; password: string };
-    const result = await loginUser(getUser, verifyPassword, issueToken, email, password);
+    const result = await loginUser(
+      getUser,
+      verifyPassword,
+      issueToken,
+      attemptTracker,
+      email,
+      password
+    );
     if (result.kind === 'failure') {
       res.status(401).end();
       return;
