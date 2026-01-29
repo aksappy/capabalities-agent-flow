@@ -13,7 +13,7 @@ describe('Registration - register only when the email is unique', () => {
     const result = await registerUser(
       repo,
       'new@example.com',
-      'password123'
+      'password123!'
     );
 
     expect(result.kind).toBe('success');
@@ -39,5 +39,19 @@ describe('Registration - register only when password is at least 8 characters lo
 
     expect(result.kind).toBe('failure');
     expect(result.reason).toBe('password_too_short');
+  });
+});
+
+describe('Registration - email unique, password 8+ chars and contains special character, then save user', () => {
+  it('when password has no special character, registration fails with password_must_contain_special_character', async () => {
+    const repo: UserRepository = {
+      findByEmail: vi.fn().mockResolvedValue(null),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const result = await registerUser(repo, 'new@example.com', 'password123');
+
+    expect(result.kind).toBe('failure');
+    expect(result.reason).toBe('password_must_contain_special_character');
   });
 });
