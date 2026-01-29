@@ -81,3 +81,21 @@ describe('Registration HTTP - validate payload', () => {
     expect(repo.findByEmail).not.toHaveBeenCalled();
   });
 });
+
+describe('Registration HTTP - success response', () => {
+  it('when registration is successful, then respond with 204', async () => {
+    const repo: UserRepository = {
+      findByEmail: vi.fn().mockResolvedValue(null),
+      save: vi.fn().mockResolvedValue(undefined),
+    };
+    const app = express();
+    app.use(express.json());
+    app.use('/register', createRegistrationRouter(repo));
+
+    const response = await request(app)
+      .post('/register')
+      .send({ email: 'new@example.com', password: 'password123!' });
+
+    expect(response.status).toBe(204);
+  });
+});
