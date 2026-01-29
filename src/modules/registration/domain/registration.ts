@@ -1,16 +1,20 @@
-interface RegistrationResult {
+import type { UserRepository } from './user-repository';
+import type { PasswordHasher } from './password-hasher';
+
+export interface RegistrationResult {
   success: boolean;
   error?: string;
 }
 
-interface User {
-  email: string;
-  hashedPassword: string;
-}
-
 export class Registration {
-  private users: Map<string, User> = new Map();
   private readonly SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/;
+  private userRepository: UserRepository;
+  private passwordHasher: PasswordHasher;
+
+  constructor(userRepository: UserRepository, passwordHasher?: PasswordHasher) {
+    this.userRepository = userRepository;
+    this.passwordHasher = passwordHasher || new NoOpPasswordHasher();
+  }
 
   async register(email: string, password: string): Promise<RegistrationResult> {
     // Check password length
@@ -30,19 +34,28 @@ export class Registration {
     }
 
     // Check if email already exists
-    if (this.users.has(email)) {
+    const existingUser = await this.userRepository.findByEmail(email);
+    if (existingUser) {
       return {
         success: false,
         error: 'Email already exists',
       };
     }
 
-    // For now, store with plain password (will add hashing in next iteration)
-    this.users.set(email, {
+    // Hash password and save user
+    const hashedPassword = await this.passwordHasher.hash(password);
+    await this.userRepository.save({
       email,
-      hashedPassword: password,
+      hashedPassword,
     });
 
     return { success: true };
+  }
+}
+
+// Default no-op hasher for simple testing
+class NoOpPasswordHasher implements PasswordHasher {
+  async hash(password: string): Promise<string> {
+    return password;
   }
 }
